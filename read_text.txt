@@ -1,0 +1,11 @@
+import easyocr
+import streamlit as st
+uploaded_file=st.file_uploader("Choose a file")
+if uploaded_file is not None:
+    bytes_data= uploaded_file.getvalue()
+    st.write(bytes_data)
+        
+    reader= easyocr.Reader(['fa'],gpu=False)
+    result=reader.readtext(uploaded_file,detail=0 ,paragraph=True,decoder='wordbeamsearch')
+    st.info(result)
+
