@@ -1,0 +1,54 @@
+import cv2
+import imutils
+import easyocr
+import pyodbc
+from tkinter import StringVar, messagebox
+
+connection = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};'
+                            ' Server=.;'
+                            'Database=plack;'
+                            ' Trusted_Connection=yes; '
+                            'CHARSET=UTF-8')
+cursor = connection.cursor()
+
+def search(result):
+    
+    res = cursor.execute("select * from Plack")
+    for item in res:
+        if  item[1] == result:
+            messagebox.showinfo("توجه", "موجود است!!")
+        else:
+            messagebox.showerror("ارور", "پیدا نشد!!")
+def read_data(edge):
+    reader = easyocr.Reader(['fa'], gpu=False)
+    result = reader.readtext(edge, detail=0, paragraph=True, decoder='wordbeamsearch')
+    for _ in result:
+        res=_
+        print(res)
+        search(res)
+
+def process_image(image):
+
+    image = imutils.resize(image, width=1000)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    filtered = cv2.GaussianBlur(gray, (5, 5), 0)
+    edged = cv2.Canny(filtered, 10, 100)
+    read_data(edged)
+    contours, _ = cv2.findContours(edged.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    #cv2.imshow('image', image)
+    cv2.imshow('edged', edged)
+    cv2.waitKey(0)
+def webcam():
+    cap = cv2.VideoCapture(0)
+    while cap.isOpened():
+        success, img = cap.read()
+        process_image(img)
+        k = cv2.waitKey(1)
+        if k == ord('q'):
+            break
+    # بستن وبکم
+    cap.release()
+    cv2.destroyAllWindows()
+
+# فراخوانی تابع webcam
+webcam()
